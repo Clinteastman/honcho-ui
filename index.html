@@ -6,16 +6,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <!--
       CSP: defense-in-depth against XSS while we hold a JWT in localStorage.
-      - default-src 'self': scripts, fonts, anything else must be same-origin.
-      - script-src 'self': blocks inline scripts (with one exception for the
-        Vite HMR-injected runtime in dev, hence 'unsafe-inline' for style).
-      - connect-src '*': we don't know the Honcho base URL at build time
-        (user enters it at runtime). Tightened by the app via reject-non-HTTPS.
-      - frame-ancestors 'none': cannot be iframed.
+      Note: `frame-ancestors` and `report-uri` can ONLY be delivered via HTTP
+      header; both are silently dropped from <meta> CSP. The Caddy config
+      that fronts our reference deployment sets X-Frame-Options: DENY, which
+      gives equivalent protection. Self-hosters running behind their own
+      server should also set Content-Security-Policy / X-Frame-Options
+      headers there.
+
+      connect-src is wildcard because the Honcho base URL is configured by
+      the user at runtime - we don't know it at build time. The app rejects
+      non-HTTPS endpoints with a visible warning.
     -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src *; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src *; base-uri 'self'; form-action 'self';"
     />
     <meta name="referrer" content="no-referrer" />
     <meta name="color-scheme" content="dark" />

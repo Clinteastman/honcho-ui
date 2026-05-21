@@ -50,10 +50,23 @@ function readAuth(): StoredAuth | null {
   return readFromStorage(localStorage) ?? readFromStorage(sessionStorage);
 }
 
-/* --- subscribe/snapshot store for useSyncExternalStore ------------------- */
+/* --- subscribe/snapshot store for useSyncExternalStore -------------------
+
+   getSnapshot() must be referentially stable when the underlying data
+   hasn't changed - otherwise useSyncExternalStore detects a "change" on
+   every render and triggers an infinite re-render loop (React error #185).
+
+   Cache the snapshot by a string key derived from the stored auth, and
+   invalidate the cache only when notify() fires.
+------------------------------------------------------------------------ */
 
 const subscribers = new Set<() => void>();
-function notify() { subscribers.forEach((cb) => cb()); }
+let cachedSnapshot: AuthState | null = null;
+
+function notify() {
+  cachedSnapshot = null;
+  subscribers.forEach((cb) => cb());
+}
 
 function subscribe(cb: () => void) {
   subscribers.add(cb);
@@ -61,23 +74,33 @@ function subscribe(cb: () => void) {
 }
 
 function getSnapshot(): AuthState {
+  if (cachedSnapshot) return cachedSnapshot;
   const config = readAuth();
-  return {
+  cachedSnapshot = {
     config,
     decoded: config ? decodeHonchoJWT(config.jwt) : null,
   };
+  return cachedSnapshot;
+}
+
+/**
+ * Cross-tab synchronization: storage events fire in OTHER tabs when this
+ * tab calls localStorage.setItem. One global listener; we attach lazily
+ * the first time anything reads auth.
+ */
+let storageListenerInstalled = false;
+function ensureStorageListener() {
+  if (storageListenerInstalled || typeof window === "undefined") return;
+  storageListenerInstalled = true;
+  window.addEventListener("storage", (e) => {
+    if (e.key === STORAGE_KEY) notify();
+  });
 }
 
 /** Hook into the auth state. Re-renders subscribers when storage changes. */
 export function useAuth(): AuthState {
-  // Cross-tab synchronization: respond to storage events from other tabs.
-  useEffect(() => {
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY) notify();
-    };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-  }, []);
+  // Register the storage listener exactly once across all components.
+  useEffect(ensureStorageListener, []);
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
