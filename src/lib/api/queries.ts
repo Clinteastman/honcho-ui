@@ -397,13 +397,25 @@ export function useServerInfo() {
   return useQuery<ServerInfo | null>({
     queryKey: ["server-info"],
     queryFn: async () => {
-      const c = makeClient();
       // /v3/info is one of our local extensions (see vps/honcho/patches in
       // k12-homelab). Cloud Honcho doesn't ship it yet; we degrade
       // gracefully by returning null on 404.
-      const res = await c.GET("/v3/info" as never);
-      if (res.error || !res.data) return null;
-      return res.data as ServerInfo;
+      //
+      // Plain fetch rather than the typed client because /v3/info isn't
+      // necessarily in the OpenAPI spec we generated types from - the
+      // typed client refuses unknown paths.
+      const auth = (await import("../auth")).getAuth();
+      if (!auth) return null;
+      const baseUrl = auth.baseUrl.replace(/\/v\d+\/?$/, "");
+      try {
+        const r = await fetch(baseUrl + "/v3/info", {
+          headers: { Authorization: `Bearer ${auth.jwt}`, Accept: "application/json" },
+        });
+        if (!r.ok) return null;
+        return (await r.json()) as ServerInfo;
+      } catch {
+        return null;
+      }
     },
     staleTime: 60_000,
     retry: false,
