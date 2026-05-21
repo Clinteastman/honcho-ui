@@ -1,14 +1,21 @@
-import { Activity, Folder, MessageCircle, MessagesSquare, Users } from "lucide-react";
+import { Activity, Check, Folder, MessageCircle, MessagesSquare, Users } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Spinner, EmptyState, Skeleton } from "@/components/ui/empty";
 import { useCurrentWorkspace } from "@/lib/workspace";
 import { useWorkspaces, usePeers, useSessions, useConclusions } from "@/lib/api/queries";
-import { formatCount } from "@/lib/utils";
-import { Link } from "@/lib/router";
+import { formatCount, cn } from "@/lib/utils";
+import { Link, useNavigate } from "@/lib/router";
 
 export function DashboardPage() {
-  const { current } = useCurrentWorkspace();
+  const { current, setCurrent, locked } = useCurrentWorkspace();
+  const navigate = useNavigate();
+
+  const handleSelectWorkspace = (id: string) => {
+    setCurrent(id);
+    navigate("/sessions");
+  };
   const workspaces = useWorkspaces({});
   const peers = usePeers(current ?? "", {});
   const sessions = useSessions(current ?? "", {});
@@ -86,20 +93,34 @@ export function DashboardPage() {
             <ul className="divide-y divide-surface1/40">
               {wsItems.map((w) => {
                 const ws = w as { id?: string; created_at?: string };
+                const isCurrent = ws.id === current;
                 return (
                   <li key={ws.id}>
-                    <Link
-                      to={`/workspaces`}
-                      className="flex items-center justify-between px-5 py-3 hover:bg-surface1/30 transition-colors"
+                    <button
+                      type="button"
+                      onClick={() => ws.id && handleSelectWorkspace(ws.id)}
+                      disabled={locked && !isCurrent}
+                      className={cn(
+                        "w-full flex items-center justify-between gap-3 px-5 py-3 text-left",
+                        "transition-colors hover:bg-surface1/30",
+                        "disabled:opacity-50 disabled:cursor-not-allowed",
+                        isCurrent && "bg-mauve/5",
+                      )}
                     >
                       <span className="flex items-center gap-2">
-                        <Folder className="size-3.5 text-mauve" />
+                        <Folder className={cn("size-3.5", isCurrent ? "text-mauve" : "text-muted")} />
                         <span className="font-mono text-sm">{ws.id}</span>
+                        {isCurrent && (
+                          <Badge tone="mauve" className="gap-1">
+                            <Check className="size-3" />
+                            active
+                          </Badge>
+                        )}
                       </span>
-                      <span className="text-[11px] text-muted">
+                      <span className="text-[11px] text-muted tabular-nums">
                         {ws.created_at ? new Date(ws.created_at).toLocaleDateString() : ""}
                       </span>
-                    </Link>
+                    </button>
                   </li>
                 );
               })}
