@@ -126,13 +126,22 @@ export function clearAuth() {
   notify();
 }
 
-/** Normalize a user-entered base URL: strip trailing slash, add /v3 if missing. */
+/**
+ * Normalize a user-entered base URL: ensure scheme, strip trailing slash,
+ * strip trailing /v3 (or any /vN) since the OpenAPI-generated paths
+ * already include the version prefix.
+ *
+ * Accepts all of these as equivalent:
+ *   honcho.example.com
+ *   https://honcho.example.com
+ *   https://honcho.example.com/
+ *   https://honcho.example.com/v3
+ */
 export function normalizeBaseUrl(input: string): string {
   let v = input.trim();
   if (!v) return v;
   if (!/^https?:\/\//i.test(v)) v = "https://" + v;
   v = v.replace(/\/+$/, "");
-  // Add /v3 unless they explicitly included a version
-  if (!/\/v\d+$/.test(v)) v = v + "/v3";
+  v = v.replace(/\/v\d+$/, "");
   return v;
 }

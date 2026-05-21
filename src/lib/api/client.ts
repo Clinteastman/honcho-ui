@@ -30,7 +30,11 @@ export function makeClient() {
     },
   };
 
-  const client = createClient<paths>({ baseUrl: auth.baseUrl });
+  // Defense in depth: strip any trailing /vN from the stored base URL.
+  // Generated paths already include the version (e.g. /v3/workspaces/list).
+  // Without this, a stored baseUrl like ".../v3" would yield ".../v3/v3/...".
+  const baseUrl = auth.baseUrl.replace(/\/v\d+$/, "");
+  const client = createClient<paths>({ baseUrl });
   client.use(authMiddleware);
   return client;
 }

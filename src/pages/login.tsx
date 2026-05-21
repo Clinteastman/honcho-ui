@@ -11,7 +11,7 @@ import { decodeHonchoJWT } from "@/lib/jwt";
 import { validateCurrentAuth } from "@/lib/api/queries";
 import { toast } from "sonner";
 
-const DEFAULT_BASE = "https://api.honcho.dev/v3";
+const DEFAULT_BASE = "https://api.honcho.dev";
 
 export function LoginPage() {
   const [baseUrl, setBaseUrl] = useState(DEFAULT_BASE);
@@ -102,7 +102,8 @@ export function LoginPage() {
                 </div>
                 <p className="text-[11px] text-muted leading-relaxed pt-0.5">
                   Cloud is <code className="font-mono text-subtext">api.honcho.dev</code>; for
-                  self-hosted, paste your URL. <code className="font-mono text-subtext">/v3</code> is added if you omit it.
+                  self-hosted, paste your URL.{" "}
+                  <code className="font-mono text-subtext">/v3</code> is stripped if you include it.
                 </p>
               </div>
 
