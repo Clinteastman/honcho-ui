@@ -24,7 +24,7 @@ export function WorkspacesPage() {
 
   const handleSelect = (id: string) => {
     setCurrent(id);
-    navigate("/peers");
+    navigate("/sessions");
   };
 
   return (
