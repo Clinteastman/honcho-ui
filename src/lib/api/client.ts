@@ -30,10 +30,14 @@ export function makeClient() {
     },
   };
 
-  // Defense in depth: strip any trailing /vN from the stored base URL.
-  // Generated paths already include the version (e.g. /v3/workspaces/list).
-  // Without this, a stored baseUrl like ".../v3" would yield ".../v3/v3/...".
-  const baseUrl = auth.baseUrl.replace(/\/v\d+$/, "");
+  // Defense in depth: strip ALL trailing /vN segments from the stored base
+  // URL. Generated paths already include the version (e.g. /v3/workspaces).
+  // Without this, a stored baseUrl like ".../v3" or ".../v3/v3" would yield
+  // ".../v3/v3/..." or ".../v3/v3/v3/..." respectively.
+  let baseUrl = auth.baseUrl;
+  while (/\/v\d+\/?$/.test(baseUrl)) {
+    baseUrl = baseUrl.replace(/\/v\d+\/?$/, "");
+  }
   const client = createClient<paths>({ baseUrl });
   client.use(authMiddleware);
   return client;

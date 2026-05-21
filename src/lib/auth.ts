@@ -142,6 +142,10 @@ export function normalizeBaseUrl(input: string): string {
   if (!v) return v;
   if (!/^https?:\/\//i.test(v)) v = "https://" + v;
   v = v.replace(/\/+$/, "");
-  v = v.replace(/\/v\d+$/, "");
+  // Idempotently strip ALL trailing /vN segments (handles ".../v3" and
+  // ".../v3/v3" alike).
+  while (/\/v\d+\/?$/.test(v)) {
+    v = v.replace(/\/v\d+\/?$/, "");
+  }
   return v;
 }
