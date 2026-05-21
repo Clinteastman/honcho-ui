@@ -1,14 +1,17 @@
-import { Settings, Globe, KeyRound, ShieldCheck, Github } from "lucide-react";
+import { Settings, Globe, KeyRound, ShieldCheck, Github, Server, Brain, Cpu } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Spinner } from "@/components/ui/empty";
 import { useAuth, clearAuth } from "@/lib/auth";
+import { useServerInfo } from "@/lib/api/queries";
 import { toast } from "sonner";
 
 export function SettingsPage() {
   const { config, decoded } = useAuth();
+  const info = useServerInfo();
 
   if (!config) return null;
 
@@ -79,6 +82,72 @@ export function SettingsPage() {
                   )}
                 </dl>
               </>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Server className="size-4 text-mauve" />
+              Server deployment
+              {info.data?.version && (
+                <Badge tone="outline">v{info.data.version}</Badge>
+              )}
+            </CardTitle>
+            <p className="text-xs text-subtext mt-1">
+              What LLMs the connected Honcho is configured to use. Surfaced
+              via <code className="font-mono">/v3/info</code> — a local extension
+              on this deployment; cloud Honcho or older self-hosted versions
+              may not expose it yet.
+            </p>
+          </CardHeader>
+          <CardContent>
+            {info.isLoading ? (
+              <Spinner />
+            ) : !info.data ? (
+              <div className="text-sm text-subtext leading-relaxed">
+                <code className="font-mono">/v3/info</code> isn't available on
+                this Honcho instance. To enable, see the
+                {" "}
+                <a
+                  className="text-mauve hover:underline"
+                  href="https://github.com/Clinteastman/k12-homelab/tree/main/vps/honcho/patches"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                >
+                  reference patch
+                </a>
+                {" "}or check whether your Honcho version added it natively.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {Object.entries(info.data.features ?? {}).map(([feat, cfg]) => (
+                  <div
+                    key={feat}
+                    className="flex items-center justify-between gap-3 rounded-md border border-surface1/40 bg-mantle/40 px-3 py-2.5"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      {feat === "embedding"
+                        ? <Cpu className="size-3.5 text-sapphire shrink-0" />
+                        : <Brain className="size-3.5 text-mauve shrink-0" />}
+                      <span className="text-xs uppercase tracking-widest text-muted truncate">
+                        {feat.replace(/_/g, " ")}
+                      </span>
+                    </div>
+                    {cfg ? (
+                      <div className="text-right min-w-0">
+                        <div className="text-sm font-mono truncate">{cfg.model ?? "—"}</div>
+                        {cfg.transport && (
+                          <Badge tone="outline" className="mt-0.5">{cfg.transport}</Badge>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-xs text-muted">not configured</span>
+                    )}
+                  </div>
+                ))}
+              </div>
             )}
           </CardContent>
         </Card>

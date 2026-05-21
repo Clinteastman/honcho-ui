@@ -385,6 +385,31 @@ export function useWebhooks(workspaceId: string) {
   });
 }
 
+/* ------------------------------------------------------------------ server */
+
+export interface ServerInfo {
+  version?: string;
+  auth?: { enabled?: boolean };
+  features?: Record<string, { transport?: string | null; model?: string | null } | null>;
+}
+
+export function useServerInfo() {
+  return useQuery<ServerInfo | null>({
+    queryKey: ["server-info"],
+    queryFn: async () => {
+      const c = makeClient();
+      // /v3/info is one of our local extensions (see vps/honcho/patches in
+      // k12-homelab). Cloud Honcho doesn't ship it yet; we degrade
+      // gracefully by returning null on 404.
+      const res = await c.GET("/v3/info" as never);
+      if (res.error || !res.data) return null;
+      return res.data as ServerInfo;
+    },
+    staleTime: 60_000,
+    retry: false,
+  });
+}
+
 /* --------------------------------------------------------------------- meta */
 
 /**
