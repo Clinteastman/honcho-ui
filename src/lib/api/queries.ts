@@ -160,6 +160,105 @@ export function usePeerRepresentation(
   });
 }
 
+export function usePeerCard(workspaceId: string, peerId: string) {
+  return useQuery({
+    queryKey: ["peer-card", workspaceId, peerId],
+    queryFn: async () => {
+      const c = makeClient();
+      return unwrap(
+        await c.GET(
+          "/v3/workspaces/{workspace_id}/peers/{peer_id}/card",
+          {
+            params: { path: { workspace_id: workspaceId, peer_id: peerId } },
+          },
+        ),
+      );
+    },
+    enabled: !!workspaceId && !!peerId,
+  });
+}
+
+export function useUpdatePeerCard() {
+  const qc = useQueryClient();
+  return useMutation<unknown, Error, { workspaceId: string; peerId: string; body: Record<string, unknown> }>({
+    mutationFn: async ({ workspaceId, peerId, body }) => {
+      const c = makeClient();
+      return unwrap(
+        await c.PUT(
+          "/v3/workspaces/{workspace_id}/peers/{peer_id}/card",
+          {
+            params: { path: { workspace_id: workspaceId, peer_id: peerId } },
+            body: body as never,
+          },
+        ),
+      );
+    },
+    onSuccess: (_d, v) => {
+      qc.invalidateQueries({ queryKey: ["peer-card", v.workspaceId, v.peerId] });
+      qc.invalidateQueries({ queryKey: ["peer-representation", v.workspaceId, v.peerId] });
+    },
+  });
+}
+
+export function usePeerContext(workspaceId: string, peerId: string) {
+  return useQuery({
+    queryKey: ["peer-context", workspaceId, peerId],
+    queryFn: async () => {
+      const c = makeClient();
+      return unwrap(
+        await c.GET(
+          "/v3/workspaces/{workspace_id}/peers/{peer_id}/context",
+          {
+            params: { path: { workspace_id: workspaceId, peer_id: peerId } },
+          },
+        ),
+      );
+    },
+    enabled: !!workspaceId && !!peerId,
+  });
+}
+
+export function usePeerSessions(workspaceId: string, peerId: string) {
+  return useQuery({
+    queryKey: ["peer-sessions", workspaceId, peerId],
+    queryFn: async () => {
+      const c = makeClient();
+      return unwrap(
+        await c.POST(
+          "/v3/workspaces/{workspace_id}/peers/{peer_id}/sessions",
+          {
+            params: { path: { workspace_id: workspaceId, peer_id: peerId } },
+            body: {} as never,
+          },
+        ),
+      );
+    },
+    enabled: !!workspaceId && !!peerId,
+  });
+}
+
+export function useUpdatePeer() {
+  const qc = useQueryClient();
+  return useMutation<unknown, Error, { workspaceId: string; peerId: string; body: Record<string, unknown> }>({
+    mutationFn: async ({ workspaceId, peerId, body }) => {
+      const c = makeClient();
+      return unwrap(
+        await c.PUT(
+          "/v3/workspaces/{workspace_id}/peers/{peer_id}",
+          {
+            params: { path: { workspace_id: workspaceId, peer_id: peerId } },
+            body: body as never,
+          },
+        ),
+      );
+    },
+    onSuccess: (_d, v) => {
+      qc.invalidateQueries({ queryKey: ["peer", v.workspaceId, v.peerId] });
+      qc.invalidateQueries({ queryKey: ["peers", v.workspaceId] });
+    },
+  });
+}
+
 export function usePeerChat() {
   return useMutation({
     mutationFn: async (args: {
