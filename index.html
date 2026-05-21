@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--
+      CSP: defense-in-depth against XSS while we hold a JWT in localStorage.
+      - default-src 'self': scripts, fonts, anything else must be same-origin.
+      - script-src 'self': blocks inline scripts (with one exception for the
+        Vite HMR-injected runtime in dev, hence 'unsafe-inline' for style).
+      - connect-src '*': we don't know the Honcho base URL at build time
+        (user enters it at runtime). Tightened by the app via reject-non-HTTPS.
+      - frame-ancestors 'none': cannot be iframed.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src *; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
+    />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#1e1e2e" />
+    <title>Honcho UI</title>
+  </head>
+  <body class="bg-base text-text antialiased">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

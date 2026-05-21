@@ -1,0 +1,4 @@
+# Cloudflare Pages / Netlify SPA fallback so deep links work.
+# The app uses hash-based routing so this is mostly redundant for it,
+# but it's harmless and helps anyone who hand-edits a URL.
+/*    /index.html   200
